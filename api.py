@@ -15,12 +15,6 @@ class Livro(db.Model):
 with app.app_context():
     db.create_all()
 
-livros = [
-    {'id': 1, 'titulo': '1984', 'autor': 'George Orwell'},
-    {'id': 2, 'titulo': 'O Senhor dos Anéis', 'autor': 'J. R. R. Tolkien'},
-    {'id': 3, 'titulo': 'O Prisioneiro de Azkaban', 'autor': 'J. K. Rowling'}
-]
-
 @app.route('/api/livros', methods=['GET'])
 def get_livros():
     livros = Livro.query.all()
@@ -51,6 +45,36 @@ def add_livro():
         "titulo":novo_livro.titulo,
         "autor": novo_livro.autor
     }), 201
+
+@app.route('/api/livros/<int:id>', methods=['DELETE'])
+def delete_livro(id):
+    livro = Livro.query.get(id)
+    if livro is None:
+        return jsonify({"error":"livro não encontrado"}), 404
+    
+    db.session.delete(livro)
+    db.session.commit()
+    return '', 204
+
+@app.route('/api/livros/<int:id>', methods=['PUT'])
+def update_livro(id):
+    livro = Livro.query.get(id)
+
+    if livro is None:
+        return jsonify({"error":"livro não encontrado"}), 404
+    
+    dados = request.get_json()
+    livro.titulo = dados.get('titulo', livro.titulo)
+    livro.autor = dados.get('autor', livro.autor)
+
+    db.session.commit()
+
+    return jsonify({
+        "id":livro.id,
+        "titulo": livro.titulo,
+        "autor": livro.autor
+    }), 201
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
